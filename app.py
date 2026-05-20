@@ -4,49 +4,46 @@ import pandas as pd
 # 1. CONFIGURACIÓN DE PÁGINA E IDENTIDAD CORPORATIVA WILTEL
 st.set_page_config(page_title="Pricing Wiltel", layout="wide", initial_sidebar_state="expanded")
 
-# Inyección de estilos CSS para lograr el formato de Tablero Corporativo Wiltel
+# Inyección de estilos CSS para Tablero Corporativo Wiltel
 st.markdown("""
     <style>
     .main { background-color: #f4f6f9; }
     [data-testid="stSidebar"] { background-color: #003366; }
-    [data-testid="stSidebar"] .stMarkdown p { color: white; font-weight: bold; }
+    /* Forzar que todos los textos del menú lateral sean blancos y legibles */
+    [data-testid="stSidebar"] *, [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label { 
+        color: #ffffff !important; 
+        font-weight: 500;
+    }
     h1, h2, h3, h4 { color: #003366; font-family: 'Arial', sans-serif; }
-    .wiltel-container {
+    
+    /* Formato de Contenedores Tipo Tarjetas por sección */
+    .wiltel-card {
         background-color: #ffffff;
-        padding: 20px;
+        padding: 22px;
         border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+        margin-bottom: 25px;
         border-left: 5px solid #003366;
     }
-    .stButton>button { background-color: #003366; color: white; border-radius: 4px; width: 100%; }
-    .stCheckbox label p { font-size: 15px; font-weight: 500; }
+    /* Estilo para los Sliders Corporativos */
+    .stSlider > div [data-baseweb="slider"] { background-color: #ff823a; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- INICIALIZACIÓN DE LA BASE DE DATOS MUTABLE (Session State) ---
+# --- INICIALIZACIÓN DE LA BASE DE DATOS EN MEMORIA (Session State) ---
 
-# Parámetros Comerciales Iniciales
+# Parámetros Estratégicos Iniciales
 if 'comercial_params' not in st.session_state:
-    st.session_state.comercial_params = {
-        "tc": 1420.0,
-        "pb_objetivo": 6,
-        "costo_fact": 8.0
-    }
+    st.session_state.comercial_params = {"tc": 1420.0, "pb_objetivo": 6, "costo_fact": 8.0}
 
-# Carteras de Productos (Modificables dinámicamente en Pestaña 2: Administración Comercial)
-if 'db_internet' not in st.session_state:
-    st.session_state.db_internet = ["Ninguno", "WILTEL 25 MB", "WILTEL 50 MB", "WILTEL 150 MB", "WILTEL 300 MB"]
+# Cartera de Productos (Ahora en listas dinámicas mutables)
+if 'db_internet' not in st.session_state: st.session_state.db_internet = ["Ninguno", "WILTEL 25 MB", "WILTEL 50 MB", "WILTEL 150 MB", "WILTEL 300 MB"]
+if 'db_tv' not in st.session_state: st.session_state.db_tv = ["Ninguno", "WILTEL TV HD", "FULL TV HD", "PLAYME TV HD", "PLAYME FULL BOX"]
+if 'db_telefonia' not in st.session_state: st.session_state.db_telefonia = ["Ninguno", "Línea Hogar Básica"]
+if 'db_adicionales' not in st.session_state: st.session_state.db_adicionales = ["WILTEL ON", "MESH", "PAQUETE FUTBOL", "PAQUETE TV PREMIUM", "ALMACENAMIENTO CLOUD"]
 
-if 'db_tv' not in st.session_state:
-    st.session_state.db_tv = ["Ninguno", "WILTEL TV HD", "FULL TV HD", "PLAYME TV HD", "PLAYME FULL BOX"]
-
-if 'db_telefonia' not in st.session_state:
-    st.session_state.db_telefonia = ["Ninguno", "Línea Hogar Básica"]
-
-# Administración de Costos (USD sin IVA) - Pestaña 4
+# Maestro de Insumos y Costos (USD sin IVA)
 if 'costo_mo' not in st.session_state: st.session_state.costo_mo = 47.36
-if 'iva_mo' not in st.session_state: st.session_state.iva_mo = 21.0
 
 if 'mat_ftth' not in st.session_state:
     st.session_state.mat_ftth = [
@@ -88,11 +85,27 @@ if 'db_costos_directos' not in st.session_state:
         {"Concepto": "Almacenamiento Cloud 50GB", "Costo USD": 2.00, "IVA %": 21.0, "Margen Deseado %": 30.0}
     ]
 
-# --- MENÚ LATERAL DE NAVEGACIÓN CORPORATIVA ---
+# Matriz Dinámica de Reglas de Hardware (NUEVA ESTRUCTURA SOLICITADA)
+if 'reglas_tecnicas' not in st.session_state:
+    st.session_state.reglas_tecnicas = [
+        {"Disparador (Venta)": "FULL TV HD", "Tipo Imputación": "Equipo", "Elemento Asignado": "STB mod HC-C730 (Beacon)", "Requiere Bolsa Coaxil": True},
+        {"Disparador (Venta)": "PLAYME FULL BOX", "Tipo Imputación": "Equipo", "Elemento Asignado": "STB mod HC-C730 (Beacon)", "Requiere Bolsa Coaxil": False},
+        {"Disparador (Venta)": "WILTEL TV HD", "Tipo Imputación": "Bolsa Materiales", "Elemento Asignado": "Paquete Coaxil", "Requiere Bolsa Coaxil": True},
+        {"Disparador (Venta)": "PLAYME TV HD", "Tipo Imputación": "Bolsa Materiales", "Elemento Asignado": "Paquete Coaxil", "Requiere Bolsa Coaxil": True},
+        {"Disparador (Venta)": "WILTEL ON", "Tipo Imputación": "Costo Directo + HW", "Elemento Asignado": "Chip de datos WILTEL ON 1GB", "Requiere Bolsa Coaxil": False},
+        {"Disparador (Venta)": "MESH", "Tipo Imputación": "Equipo", "Elemento Asignado": "ZXHN H3601N (Router)", "Requiere Bolsa Coaxil": False},
+        {"Disparador (Venta)": "PAQUETE FÚTBOL", "Tipo Imputación": "Costo Directo", "Elemento Asignado": "Paquete TV FÚTBOL", "Requiere Bolsa Coaxil": False},
+        {"Disparador (Venta)": "PAQUETE TV PREMIUM", "Tipo Imputación": "Costo Directo", "Elemento Asignado": "Paquete TV PREMIUM", "Requiere Bolsa Coaxil": False}
+    ]
+
+# --- MENÚ LATERAL DE NAVEGACIÓN CORPORATIVA VÍA BOTÓN DE RADIO ---
 with st.sidebar:
-    st.markdown("## 🌐 MENÚ PRINCIPAL")
+    # Intenta cargar el logo oficial desde tu web. Si falla por SSL, muestra texto blanco
+    st.image("https://www.wiltel.com.ar/wp-content/uploads/2021/04/wiltel_blanco.png", width=190, errors="ignore")
+    st.markdown("<p style='font-size:12px; margin-top:-15px; margin-bottom:20px; text-align:center;'>Wiltel Comunicaciones S.A.</p>", unsafe_allow_html=True)
+    
     opcion_menu = st.radio(
-        "Seleccione Entorno:",
+        "Navegación del Sistema:",
         [
             "1- Tablero de Simulación Comercial",
             "2- Administración Comercial",
@@ -100,8 +113,8 @@ with st.sidebar:
             "4- Administración de Costos"
         ]
     )
-    st.sidebar.markdown("---")
-    st.sidebar.caption("Wiltel Comunicaciones S.A. | CPQ Engine 2026")
+    st.markdown("---")
+    st.caption("CPQ Pricing Engine v2026")
 
 # ==============================================================================
 # 1- PESTAÑA: TABLERO DE SIMULACIÓN COMERCIAL
@@ -109,180 +122,192 @@ with st.sidebar:
 if opcion_menu == "1- Tablero de Simulación Comercial":
     st.title("Pricing Wiltel")
     
-    # Contenedor 1: Configuración Comercial
-    st.markdown('<div class="wiltel-container">', unsafe_allow_html=True)
+    # Tarjeta: Configuración Comercial
+    st.markdown('<div class="wiltel-card">', unsafe_allow_html=True)
     st.subheader("Configuración Comercial")
-    col_cc1, col_cc2, col_cc3 = st.columns(3)
+    col_cc1, col_cc2 = st.columns(2)
     with col_cc1:
-        segmento = st.selectbox("Segmento de Cliente", ["Consumidor Final (Con IVA)", "Corporativo (Neto sin IVA)"])
+        segmento = st.selectbox("Segmento de Cliente", ["B2C", "B2B"])
     with col_cc2:
         moneda = st.selectbox("Moneda de Cotización", ["Pesos ARS", "Dólares USD"])
-    with col_cc3:
-        st.info("📢 Precios finales expresados en $ con IVA incluido para Consumidor Final, y en la moneda elegida sin IVA para Corporativo.")
+    
+    # Ubicación del aviso solicitada abajo de los selectores
+    st.markdown("""
+    <p style='font-size:13px; color:#64748b; margin-top:10px;'>
+    ⚠️ <strong>Precios de instalación y abonos expresados en:</strong><br>
+    • $ con IVA incluido para B2C<br>
+    • Moneda seleccionada sin IVA para B2B
+    </p>
+    """, unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Contenedor 2: Combo
-    st.markdown('<div class="wiltel-container">', unsafe_allow_html=True)
+    # Tarjeta: Combo
+    st.markdown('<div class="wiltel-card">', unsafe_allow_html=True)
     st.subheader("Combo")
-    col_p1, col_p2, col_p3 = st.columns(3)
-    with col_p1:
-        prod_internet = st.selectbox("Caja 1: Internet", st.session_state.db_internet)
-    with col_p2:
-        prod_tv = st.selectbox("Caja 2: TV", st.session_state.db_tv)
-    with col_p3:
-        prod_tel = st.selectbox("Caja 3: Telefonía", st.session_state.db_telefonia)
+    col_cmb1, col_cmb2, col_cmb3 = st.columns(3)
+    with col_cmb1:
+        prod_internet = st.selectbox("Internet", st.session_state.db_internet)
+    with col_cmb2:
+        prod_tv = st.selectbox("TV", st.session_state.db_tv)
+    with col_cmb3:
+        prod_tel = st.selectbox("Telefonía", st.session_state.db_telefonia)
     
-    st.markdown("**Caja 4: Adicionales Disponibles (Selección Múltiple)**")
-    col_add1, col_add2, col_add3, col_add4 = st.columns(4)
-    
-    # ORDENADO CRÍTICO CORREGIDO: Definimos la variable única para la lógica del plan MESH
-    es_150_mesh_plan = "150 MB MESH" in prod_internet
-    
-    with col_add1:
-        add_wiltel_on = st.checkbox("WILTEL ON")
-    with col_add2:
-        if es_150_mesh_plan:
-            st.checkbox("MESH", value=False, disabled=True, help="El plan de Internet ya cuenta con Mesh integrado.")
-            add_mesh = False
-        else:
-            add_mesh = st.checkbox("MESH")
-    with col_add3:
-        add_futbol = st.checkbox("PAQUETE FÚTBOL")
-    with col_add4:
-        add_premium = st.checkbox("PAQUETE TV PREMIUM")
+    st.markdown("**Adicionales (Selección Múltiple Simultánea)**")
+    col_a1, col_a2, col_a3, col_a4 = st.columns(4)
+    with col_a1: add_wiltel_on = st.checkbox("WILTEL ON")
+    with col_a2: add_mesh = st.checkbox("MESH")
+    with col_a3: add_futbol = st.checkbox("PAQUETE FÚTBOL")
+    with col_a4: add_premium = st.checkbox("PAQUETE TV PREMIUM")
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- CÁLCULOS DEL MOTOR DE REGLAS FINANCIERAS ---
-    tc_local = st.session_state.comercial_params["tc"]
-    costo_fact_local = st.session_state.comercial_params["costo_fact"] / 100.0
-    pb_obj_local = st.session_state.comercial_params["pb_objetivo"]
+    # --- RESOLUCIÓN MATEMÁTICA INTERNA POR REGLAS DINÁMICAS ---
+    tc_maestro = st.session_state.comercial_params["tc"]
+    costo_fact_maestro = st.session_state.comercial_params["costo_fact"] / 100.0
+    pb_maestro = st.session_state.comercial_params["pb_objetivo"]
     
-    eq_dict = {item['Equipo']: float(item['Costo USD']) for item in st.session_state.db_equipos}
-    total_hw_usd = 0.0
-    lleva_coaxil = False
+    # Conversión indexada de base de datos de costos
+    eq_cost_dict = {x['Equipo']: float(x['Costo USD']) for x in st.session_state.db_equipos}
     
-    # Aplicación de Reglas de Hardware (Usando la variable unificada corregida)
-    if es_150_mesh_plan:
-        total_hw_usd += eq_dict.get("ONT GPON ZXHN F601", 24.50) + (eq_dict.get("Tenda NOVA MX3", 28.41) * 2)
-    elif prod_internet != "Ninguno":
-        total_hw_usd += eq_dict.get("ONT GPON ZXHN F6201B", 35.60)
-        
-    if prod_tv in ["WILTEL TV HD", "FULL TV HD", "PLAYME TV HD"]:
-        if not es_150_mesh_plan and prod_internet != "Ninguno":
-            total_hw_usd = eq_dict.get("ONT GPON ZXHN F6600R", 49.40)
-        lleva_coaxil = True
-        
-    if prod_tv == "FULL TV HD":
-        total_hw_usd += eq_dict.get("STB mod HC-C730 (Beacon)", 35.00)
-        
-    if add_wiltel_on:
-        total_hw_usd += eq_dict.get("DONGLE WILTEL ON", 28.60) + eq_dict.get("MINI UPS WILTEL ON", 20.67)
-    if add_mesh:
-        total_hw_usd += eq_dict.get("ZXHN H3601N (Router)", 35.60)
+    costo_hardware_usd = 0.0
+    requiere_coaxil_por_regla = False
+    
+    # Carga de Hardware Base Obligatorio por Internet
+    if prod_internet != "Ninguno":
+        costo_hardware_usd += eq_cost_dict.get("ONT GPON ZXHN F6201B", 35.60)
+    
+    # Análisis de Reglas Técnicas Dinámicas (Pestaña 3) según lo seleccionado
+    elementos_activos = []
+    if prod_tv != "Ninguno": elementos_activos.append(prod_tv)
+    if add_wiltel_on: elementos_activos.append("WILTEL ON")
+    if add_mesh: elementos_activos.append("MESH")
+    if add_futbol: elementos_activos.append("PAQUETE FÚTBOL")
+    if add_premium: elementos_activos.append("PAQUETE TV PREMIUM")
+    
+    for r in st.session_state.reglas_tecnicas:
+        if r["Disparador (Venta)"] in elementos_activos:
+            if r["Tipo Imputación"] == "Equipo":
+                costo_hardware_usd += eq_cost_dict.get(r["Elemento Asignado"], 0.0)
+            if r["Requiere Bolsa Coaxil"]:
+                # Upgrade automático de ONT y activación de bolsa coaxil
+                costo_hardware_usd = eq_cost_dict.get("ONT GPON ZXHN F6600R", 49.40)
+                if prod_tv == "FULL TV HD": costo_hardware_usd += eq_cost_dict.get("STB mod HC-C730 (Beacon)", 35.00)
+                requiere_coaxil_por_regla = True
+            if r["Disparador (Venta)"] == "WILTEL ON":
+                costo_hardware_usd += eq_cost_dict.get("DONGLE WILTEL ON", 28.60) + eq_cost_dict.get("MINI UPS WILTEL ON", 20.67)
 
-    subtotal_ftth_usd = sum(float(m['Cantidad']) * float(m['Costo Unitario USD']) for m in st.session_state.mat_ftth if m.get('Cantidad') and m.get('Costo Unitario USD'))
-    subtotal_coaxil_usd = sum(float(m['Cantidad']) * float(m['Costo Unitario USD']) for m in st.session_state.mat_coaxil if m.get('Cantidad') and m.get('Costo Unitario USD')) if lleva_coaxil else 0.0
+    # Cálculo dinámico de bolsas de materiales editables fila por fila
+    neto_ftth_usd = sum(float(x.get('Cantidad', 0)) * float(x.get('Costo Unitario USD', 0)) for x in st.session_state.mat_ftth if x.get('Cantidad'))
+    neto_coaxil_usd = sum(float(x.get('Cantidad', 0)) * float(x.get('Costo Unitario USD', 0)) for x in st.session_state.mat_coaxil if x.get('Cantidad')) if requiere_coaxil_por_regla else 0.0
     
-    inversion_kit_usd = st.session_state.costo_mo + total_hw_usd + subtotal_ftth_usd + subtotal_coaxil_usd
-    inversion_kit_local = inversion_kit_usd * tc_local if moneda == "Pesos ARS" else inversion_kit_usd
+    inversion_tecnica_usd = st.session_state.costo_mo + costo_hardware_usd + neto_ftth_usd + neto_coaxil_usd
+    inversion_total_moneda = inversion_tecnica_usd * tc_maestro if moneda == "Pesos ARS" else inversion_tecnica_usd
 
-    # Contenedor 3: Combinación de Oferta
-    st.markdown('<div class="wiltel-container">', unsafe_allow_html=True)
+    # Tarjeta: Combinación de Oferta (Pricing)
+    st.markdown('<div class="wiltel-card">', unsafe_allow_html=True)
     st.subheader("Combinación de Oferta")
-    
-    col_pr1, col_pr2 = st.columns(2)
-    with col_pr1:
-        pct_recupero = st.slider("% de Inversión Inicial a recuperar como Cargo de Instalación", 0, 100, 35) / 100.0
-        cargo_instalacion_neto = inversion_kit_local * pct_recupero
-        saldo_a_amortizar = inversion_kit_local - cargo_instalacion_neto
+    col_p1, col_p2 = st.columns(2)
+    with col_p1:
+        pct_recupero = st.slider("% de la inversión en cliente a recuperar como costo de instalación", 0, 100, 35) / 100.0
+        cargo_neto = inversion_total_moneda * pct_recupero
+        saldo_a_amortizar = inversion_total_moneda - cargo_neto
         
-        divisor = (1.0 - costo_fact_local)
-        cargo_instalacion_final = (cargo_instalacion_neto / divisor) * (1.21 if segmento == "Consumidor Final (Con IVA)" else 1.0)
-        st.metric("Cargo de Instalación Mínimo Referencial", f"{'$' if moneda == 'Pesos ARS' else 'USD'} {cargo_instalacion_final:,.2f}")
+        divisor_imp = (1.0 - costo_fact_maestro)
+        cargo_publico = (cargo_neto / divisor_imp) * (1.21 if segmento == "B2C" else 1.0)
+        st.metric("Cargo de Instalación Mínimo Referencial", f"{'$' if moneda == 'Pesos ARS' else 'USD'} {cargo_publico:,.2f}")
 
-    costo_directo_recurrente_local = 0.0
-    contribucion_marginal_local = 0.0
-    cd_dict = {item['Concepto']: item for item in st.session_state.db_costos_directos}
+    # Costos Directos con Margen Comercial Integrado
+    costo_directo_mensual_moneda = 0.0
+    contribucion_marginal_moneda = 0.0
+    cd_maestro_dict = {x['Concepto']: x for x in st.session_state.db_costos_directos}
     
-    def acumular_cd(concepto_nombre):
-        if concepto_nombre in cd_dict:
-            c_usd = float(cd_dict[concepto_nombre]["Costo USD"])
-            m_pct = float(cd_dict[concepto_nombre]["Margen Deseado %"]) / 100.0
-            c_local = c_usd * (tc_local if moneda == "Pesos ARS" else 1.0)
-            precio_serv = c_local / (1.0 - m_pct) if m_pct < 1.0 else c_local
-            return c_local, (precio_serv - c_local)
+    def procesar_costo_directo(concepto):
+        if concepto in cd_maestro_dict:
+            c_usd = float(cd_maestro_dict[concepto]["Costo USD"])
+            m_pct = float(cd_maestro_dict[concepto]["Margen Deseado %"]) / 100.0
+            c_local = c_usd * (tc_maestro if moneda == "Pesos ARS" else 1.0)
+            precio_final_serv = c_local / (1.0 - m_pct) if m_pct < 1.0 else c_local
+            return c_local, (precio_final_serv - c_local)
         return 0.0, 0.0
 
     if add_wiltel_on:
-        c, m = acumular_cd("Chip de datos WILTEL ON 1GB")
-        costo_directo_recurrente_local += c; contribucion_marginal_local += m
+        c, m = procesar_costo_directo("Chip de datos WILTEL ON 1GB")
+        costo_directo_mensual_moneda += c; contribucion_marginal_moneda += m
     if add_futbol:
-        c, m = acumular_cd("Paquete TV FÚTBOL")
-        costo_directo_recurrente_local += c; contribucion_marginal_local += m
+        c, m = procesar_costo_directo("Paquete TV FÚTBOL")
+        costo_directo_mensual_moneda += c; contribucion_marginal_moneda += m
     if add_premium:
-        c, m = acumular_cd("Paquete TV PREMIUM")
+        c, m = procesar_costo_directo("Paquete TV PREMIUM")
         costo_directo_recurrente_local += c; contribucion_marginal_local += m
 
-    amortizacion_mensual_neta = (saldo_a_amortizar / pb_obj_local) + costo_directo_recurrente_local + contribucion_marginal_local
-    abono_minimo_final = (amortizacion_mensual_neta / divisor) * (1.21 if segmento == "Consumidor Final (Con IVA)" else 1.0)
+    abono_neto_amortizacion = (saldo_a_amortizar / pb_maestro) + costo_directo_mensual_moneda + contribucion_marginal_moneda
+    abono_sugerido_publico = (abono_neto_amortizacion / divisor_imp) * (1.21 if segmento == "B2C" else 1.0)
 
-    with col_pr2:
-        abono_comercial_lista = st.slider("Abono Mensual Regular de Lista (Para Simular)", int(abono_minimo_final * 0.4), int(abono_minimo_final * 2.5), int(abono_minimo_final))
-        st.metric("Abono Mensual Mínimo Sugerido", f"{'$' if moneda == 'Pesos ARS' else 'USD'} {abono_minimo_final:,.2f}")
+    with col_p2:
+        abono_simulado_lista = st.slider("Abono Mensual Regular de Lista (Para Simular)", int(abono_sugerido_publico*0.4), int(abono_sugerido_publico*2.5), int(abono_sugerido_publico))
+        st.metric("Abono Mensual Mínimo Sugerido", f"{'$' if moneda == 'Pesos ARS' else 'USD'} {abono_sugerido_publico:,.2f}")
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Contenedor 4: Configuración de Escalas Promocionales
-    st.markdown('<div class="wiltel-container">', unsafe_allow_html=True)
+    # Tarjeta: Configuración de Escalas Promocionales (Hasta 4 Tramos con Desplegables)
+    st.markdown('<div class="wiltel-card">', unsafe_allow_html=True)
     st.subheader("Configuración de Escalas Promocionales")
-    col_d1, col_d2, col_d3, col_d4 = st.columns(4)
-    with col_d1:
-        meses_t1 = st.slider("Duración Escala 1 (Meses)", 0, 12, 4)
-    with col_d2:
-        dto_t1 = st.slider("Descuento Escala 1 (%)", 0, 100, 40) / 100.0
-    with col_d3:
-        meses_t2 = st.slider("Duración Escala 2 (Meses)", 0, 12, 8)
-    with col_d4:
-        dto_t2 = st.slider("Descuento Escala 2 (%)", 0, 100, 20) / 100.0
+    
+    col_t1, col_t2, col_t3, col_t4 = st.columns(4)
+    with col_t1:
+        st.markdown("**Tramo 1**")
+        meses_t1 = st.selectbox("Duración T1 (Meses)", [0,1,2,3,4,5,6,8,12], index=3)
+        dto_t1 = st.slider("Descuento T1 (%)", 0, 100, 40, key="d1") / 100.0
+    with col_t2:
+        st.markdown("**Tramo 2**")
+        meses_t2 = st.selectbox("Duración T2 (Meses)", [0,1,2,3,4,5,6,8,12], index=7)
+        dto_t2 = st.slider("Descuento T2 (%)", 0, 100, 20, key="d2") / 100.0
+    with col_t3:
+        st.markdown("**Tramo 3**")
+        meses_t3 = st.selectbox("Duración T3 (Meses)", [0,1,2,3,4,5,6,8,12], index=0)
+        dto_t3 = st.slider("Descuento T3 (%)", 0, 100, 0, key="d3") / 100.0
+    with col_t4:
+        st.markdown("**Tramo 4**")
+        meses_t4 = st.selectbox("Duración T4 (Meses)", [0,1,2,3,4,5,6,8,12], index=0)
+        dto_t4 = st.slider("Descuento T4 (%)", 0, 100, 0, key="d4") / 100.0
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- SIMULACIÓN DEL FLUJO PARA PAYBACK REAL ---
+    # --- FLUJO REAL MES A MES PARA PAYBACK ---
     saldo_pendiente = saldo_a_amortizar
     payback_real = 0.0
     
     for mes in range(1, 37):
         if saldo_pendiente <= 0: break
-        if mes <= meses_t1:
-            precio_mes = abono_comercial_lista * (1.0 - dto_t1)
-        elif mes <= (meses_t1 + meses_t2):
-            precio_mes = abono_comercial_lista * (1.0 - dto_t2)
-        else:
-            precio_mes = abono_comercial_lista
-            
-        precio_neto = (precio_mes / (1.21 if segmento == "Consumidor Final (Con IVA)" else 1.0)) * divisor
-        caja_amortizacion = precio_neto - costo_directo_recurrente_local
         
-        if caja_amortizacion > 0:
-            if saldo_pendiente > caja_amortizacion:
-                saldo_pendiente -= caja_amortizacion
+        if mes <= meses_t1: precio_mes = abono_simulado_lista * (1.0 - dto_t1)
+        elif mes <= (meses_t1 + meses_t2): precio_mes = abono_simulado_lista * (1.0 - dto_t2)
+        elif mes <= (meses_t1 + meses_t2 + meses_t3): precio_mes = abono_simulado_lista * (1.0 - dto_t3)
+        elif mes <= (meses_t1 + meses_t2 + meses_t3 + meses_t4): precio_mes = abono_simulado_lista * (1.0 - dto_t4)
+        else: precio_mes = abono_simulado_lista
+            
+        precio_neto = (precio_mes / (1.21 if segmento == "B2C" else 1.0)) * divisor_imp
+        ingreso_neto_kit = precio_neto - costo_directo_mensual_moneda
+        
+        if ingreso_neto_kit > 0:
+            if saldo_pendiente > ingreso_neto_kit:
+                saldo_pendiente -= ingreso_neto_kit
                 payback_real += 1.0
             else:
-                payback_real += (saldo_pendiente / caja_amortizacion)
+                payback_real += (saldo_pendiente / ingreso_neto_kit)
                 saldo_pendiente = 0
         else:
             payback_real = 99.0
             break
 
-    # Contenedor 5: Validación Comercial
-    st.markdown('<div class="wiltel-container">', unsafe_allow_html=True)
+    # Tarjeta: Validación Comercial
+    st.markdown('<div class="wiltel-card">', unsafe_allow_html=True)
     st.subheader("Validación Comercial")
     if payback_real == 99.0:
-        st.error("🔴 ALERTA CRÍTICA: El precio fijado en las escalas no cubre los costos directos mínimos.")
-    elif payback_real > pb_obj_local:
-        st.error(f"🔴 RECHAZADO: El Payback Real es de {payback_real:.1f} meses. Supera tu objetivo estratégico de {pb_obj_local} meses.")
+        st.error("🔴 Semáforo Oferta: El precio fijado es inviable porque no cubre los costos operativos mínimos.")
+    elif payback_real > pb_maestro:
+        st.error(f"🔴 Semáforo Oferta: RECHAZADO - El Payback Real es de {payback_real:.1f} meses. Supera tu límite de {pb_maestro} meses.")
     else:
-        st.success(f"🟢 APROBADO: El Payback Real es de {payback_real:.1f} meses. Cumple con el objetivo de {pb_obj_local} meses.")
+        st.success(f"🟢 Semáforo Oferta: APROBADO - El Payback Real es de {payback_real:.1f} meses. Oferta financieramente sustentable.")
         
-    st.info(f"📋 **Desglose Técnico Financiero del Kit:** Inversión Total: { '$' if moneda == 'Pesos ARS' else 'USD' } {inversion_kit_local:,.2f} | Hardware: USD {total_hw_usd:,.2f} | Materiales FTTH: USD {subtotal_ftth_usd:,.2f} | Materiales Coaxil: USD {subtotal_coaxil_usd:,.2f}")
+    st.caption(f"📊 Desglose de Inversión Inicial en Calle: Total: USD {inversion_kit_usd:,.2f} (Hardware: USD {total_hw_usd:,.2f} | Bolsa FTTH: USD {subtotal_ftth_usd:,.2f} | Bolsa Coaxil: USD {subtotal_coaxil_usd:,.2f})")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
@@ -291,31 +316,39 @@ if opcion_menu == "1- Tablero de Simulación Comercial":
 elif opcion_menu == "2- Administración Comercial":
     st.title("Administración Comercial")
     
-    st.markdown('<div class="wiltel-container">', unsafe_allow_html=True)
+    st.markdown('<div class="wiltel-card">', unsafe_allow_html=True)
     st.subheader("Parámetros Estratégicos")
-    col_pcom1, col_pcom2, col_pcom3 = st.columns(3)
-    with col_pcom1:
-        st.session_state.comercial_params["tc"] = st.number_input("Tipo de Cambio Oficial (ARS/USD)", value=st.session_state.comercial_params["tc"], step=10.0)
-    with col_pcom2:
-        st.session_state.comercial_params["pb_objetivo"] = st.number_input("Payback Máximo Objetivo (Meses)", value=st.session_state.comercial_params["pb_objetivo"], min_value=1)
-    with col_pcom3:
-        st.session_state.comercial_params["costo_fact"] = st.number_input("Costo de Facturación y Carga Impositiva (%)", value=st.session_state.comercial_params["costo_fact"], step=0.5)
+    col_p1, col_p2, col_p3 = st.columns(3)
+    with col_p1: st.session_state.comercial_params["tc"] = st.number_input("Tipo de Cambio Oficial (ARS/USD)", value=st.session_state.comercial_params["tc"], step=10.0)
+    with col_p2: st.session_state.comercial_params["pb_objetivo"] = st.number_input("Payback Máximo Objetivo (Meses)", value=st.session_state.comercial_params["pb_objetivo"], min_value=1)
+    with col_p3: st.session_state.comercial_params["costo_fact"] = st.number_input("Costo de Facturación (%)", value=st.session_state.comercial_params["costo_fact"], step=0.5)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="wiltel-container">', unsafe_allow_html=True)
-    st.subheader("Gestor de Canastas de Productos (Opciones de Cajas)")
-    st.write("Modificá las listas separadas por comas para actualizar las opciones de venta sin tocar código.")
+    st.markdown('<div class="wiltel-card">', unsafe_allow_html=True)
+    st.subheader("Opciones de Productos")
+    st.write("Agregá o eliminá productos de las listas interactivas. Se actualizarán inmediatamente en la calculadora.")
     
-    col_g1, col_g2, col_g3 = st.columns(3)
-    with col_g1:
-        txt_internet = st.text_area("Caja 1: Internet", value=", ".join(st.session_state.db_internet))
-        st.session_state.db_internet = [x.strip() for x in txt_internet.split(",") if x.strip()]
-    with col_g2:
-        txt_tv = st.text_area("Caja 2: TV", value=", ".join(st.session_state.db_tv))
-        st.session_state.db_tv = [x.strip() for x in txt_tv.split(",") if x.strip()]
-    with col_g3:
-        txt_tel = st.text_area("Caja 3: Telefonía", value=", ".join(st.session_state.db_telefonia))
-        st.session_state.db_telefonia = [x.strip() for x in txt_tel.split(",") if x.strip()]
+    col_l1, col_l2, col_l3, col_l4 = st.columns(4)
+    with col_l1:
+        st.markdown("**Internet**")
+        df_i = pd.DataFrame(st.session_state.db_internet, columns=["Producto"])
+        res_i = st.data_editor(df_i, num_rows="dynamic", key="ed_i")
+        st.session_state.db_internet = res_i["Producto"].tolist()
+    with col_l2:
+        st.markdown("**TV**")
+        df_t = pd.DataFrame(st.session_state.db_tv, columns=["Producto"])
+        res_t = st.data_editor(df_t, num_rows="dynamic", key="ed_t")
+        st.session_state.db_tv = res_t["Producto"].tolist()
+    with col_l3:
+        st.markdown("**Telefonía**")
+        df_tl = pd.DataFrame(st.session_state.db_telefonia, columns=["Producto"])
+        res_tl = st.data_editor(df_tl, num_rows="dynamic", key="ed_tl")
+        st.session_state.db_telefonia = res_tl["Producto"].tolist()
+    with col_l4:
+        st.markdown("**Adicionales**")
+        df_ad = pd.DataFrame(st.session_state.db_adicionales, columns=["Adicional"])
+        res_ad = st.data_editor(df_ad, num_rows="dynamic", key="ed_ad")
+        st.session_state.db_adicionales = res_ad["Adicional"].tolist()
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
@@ -324,15 +357,13 @@ elif opcion_menu == "2- Administración Comercial":
 elif opcion_menu == "3- Administración Técnica":
     st.title("Administración Técnica")
     
-    st.markdown('<div class="wiltel-container">', unsafe_allow_html=True)
-    st.subheader("Reglas Lógicas para Armado de Kits Técnicos")
-    st.info("💡 Estas dependencias tecnológicas cruzadas corren integradas en el backend del sistema:")
-    st.markdown("""
-    * **REGLA INTEGRADA MESH:** Si el Combo incluye un plan con nomenclatura 'MESH' nativa, asigna **ONT F601 + 2 Tenda NOVA MX3** y bloquea la duplicación comercial.
-    * **REGLA UPGRADE ONT:** El agregado de televisión (`WILTEL TV HD`, etc.) fuerza al kit a reemplazar la ONT estándar por el modelo superior **ONT GPON ZXHN F6600R**.
-    * **REGLA DECO STB HD:** El hardware **STB mod HC-C730** se imputa únicamente si se selecciona el producto de folleto **FULL TV HD**.
-    * **REGLA BOLSAS DE MATERIALES:** Materiales Fibra (FTTH) se asignan siempre. Paquete Coaxil se añade si el combo incluye televisión cableada.
-    """)
+    st.markdown('<div class="wiltel-card">', unsafe_allow_html=True)
+    st.subheader("Matriz Lógica de Vinculación de Kits y Reglas Técnicas")
+    st.write("Asociá qué producto o adicional de ventas dispara hardware extra o requiere el paquete de materiales Coaxil:")
+    
+    df_reglas = pd.DataFrame(st.session_state.reglas_tecnicas)
+    df_reglas_edit = st.data_editor(df_reglas, num_rows="dynamic", key="ed_reglas_global")
+    st.session_state.reglas_tecnicas = df_reglas_edit.to_dict('records')
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
@@ -340,34 +371,39 @@ elif opcion_menu == "3- Administración Técnica":
 # ==============================================================================
 elif opcion_menu == "4- Administración de Costos":
     st.title("Administración de Costos")
-    st.caption("⚠️ Valores expresados en **USD sin IVA**.")
+    st.caption("⚠️ Todos los costos maestros se expresan en **USD sin IVA**.")
     
-    st.markdown('<div class="wiltel-container">', unsafe_allow_html=True)
-    st.subheader("Costos de Materiales, Equipos y Mano de Obra")
+    # Tarjeta única para evitar desplazamientos laterales (Ubicación una debajo de la otra)
+    st.markdown('<div class="wiltel-card">', unsafe_allow_html=True)
+    st.subheader("Sección 1: Costos de Materiales, Equipos y Mano de Obra")
+    
     st.session_state.costo_mo = st.number_input("Mano de Obra General de Instalación (USD)", value=st.session_state.costo_mo, step=1.0)
+    st.markdown("---")
     
-    col_edit1, col_edit2 = st.columns(2)
-    with col_edit1:
-        st.markdown("#### Paquete de Materiales FTTH")
-        df_f = pd.DataFrame(st.session_state.mat_ftth)
-        df_f_edit = st.data_editor(df_f, num_rows="dynamic", key="ed_ftth_f")
-        st.session_state.mat_ftth = df_f_edit.to_dict('records')
-    with col_edit2:
-        st.markdown("#### Paquete de Materiales Coaxil")
-        df_c = pd.DataFrame(st.session_state.mat_coaxil)
-        df_c_edit = st.data_editor(df_c, num_rows="dynamic", key="ed_coaxil_f")
-        st.session_state.mat_coaxil = df_c_edit.to_dict('records')
-        
-    st.markdown("#### Matriz Maestra de Costos de Equipos")
+    st.markdown("#### Paquete de Materiales FTTH")
+    df_ftth = pd.DataFrame(st.session_state.mat_ftth)
+    # Formateo visual solicitado para el editor
+    df_ftth["Costo Unitario USD"] = df_ftth["Costo Unitario USD"].map(lambda x: float(x))
+    df_ftth_edit = st.data_editor(df_ftth, num_rows="dynamic", key="c_ftth")
+    st.session_state.mat_ftth = df_ftth_edit.to_dict('records')
+    
+    st.markdown("#### Paquete de Materiales Coaxil")
+    df_coaxil = pd.DataFrame(st.session_state.mat_coaxil)
+    df_coaxil["Costo Unitario USD"] = df_coaxil["Costo Unitario USD"].map(lambda x: float(x))
+    df_coaxil_edit = st.data_editor(df_coaxil, num_rows="dynamic", key="c_coax")
+    st.session_state.mat_coaxil = df_coaxil_edit.to_dict('records')
+    
+    st.markdown("#### Maestro de Equipos")
     df_eq = pd.DataFrame(st.session_state.db_equipos)
-    df_eq_edit = st.data_editor(df_eq, num_rows="dynamic", key="ed_eq_f")
+    df_eq_edit = st.data_editor(df_eq, num_rows="dynamic", key="c_eq")
     st.session_state.db_equipos = df_eq_edit.to_dict('records')
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="wiltel-container">', unsafe_allow_html=True)
-    st.subheader("Costos Directos")
-    st.write("Gestión de costos recurrentes mensuales e insumos junto con el margen deseado.")
+    # Tarjeta: Costos Directos
+    st.markdown('<div class="wiltel-card">', unsafe_allow_html=True)
+    st.subheader("Sección 2: Costos Directos")
+    st.write("Administración de costos mensuales recurrentes e insumos (chips, packs de fútbol) con su margen deseado.")
     df_cd = pd.DataFrame(st.session_state.db_costos_directos)
-    df_cd_edit = st.data_editor(df_cd, num_rows="dynamic", key="ed_cd_f")
+    df_cd_edit = st.data_editor(df_cd, num_rows="dynamic", key="c_cd")
     st.session_state.db_costos_directos = df_cd_edit.to_dict('records')
     st.markdown('</div>', unsafe_allow_html=True)
