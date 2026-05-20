@@ -4,7 +4,7 @@ import pandas as pd
 # 1. CONFIGURACIÓN DE PÁGINA E IDENTIDAD CORPORATIVA WILTEL
 st.set_page_config(page_title="Pricing Wiltel", layout="wide", initial_sidebar_state="expanded")
 
-# Inyección de estilos CSS para Tablero Corporativo (Letras blancas en Sidebar y Tarjetas)
+# Inyección de estilos CSS para lograr el formato de Tablero Corporativo (Letras blancas en Sidebar y Tarjetas)
 st.markdown("""
     <style>
     .main { background-color: #f4f6f9; }
@@ -17,7 +17,7 @@ st.markdown("""
     }
     h1, h2, h3, h4 { color: #003366; font-family: 'Arial', sans-serif; }
     
-    /* Contenedores tipo Tarjetas por sección (Sin divisores rígidos) */
+    /* Contenedores tipo Tarjetas por sección (Sin divisores rígidos de línea) */
     .wiltel-card {
         background-color: #ffffff;
         padding: 22px;
@@ -37,7 +37,7 @@ st.markdown("""
 if 'comercial_params' not in st.session_state:
     st.session_state.comercial_params = {"tc": 1420.0, "pb_objetivo": 6, "costo_fact": 8.0}
 
-# Cartera de Productos (Listas dinámicas editables en Pestaña 2)
+# Cartera de Productos (Listas dinámicas en filas, modificables en Pestaña 2)
 if 'db_internet' not in st.session_state: st.session_state.db_internet = ["Ninguno", "WILTEL 25 MB", "WILTEL 50 MB", "WILTEL 150 MB", "WILTEL 300 MB"]
 if 'db_tv' not in st.session_state: st.session_state.db_tv = ["Ninguno", "WILTEL TV HD", "FULL TV HD", "PLAYME TV HD", "PLAYME FULL BOX"]
 if 'db_telefonia' not in st.session_state: st.session_state.db_telefonia = ["Ninguno", "Línea Hogar Básica"]
@@ -131,7 +131,7 @@ if opcion_menu == "1- Tablero de Simulación Comercial":
     with col_cc2:
         moneda = st.selectbox("Moneda de Cotización", ["Pesos ARS", "Dólares USD"])
     
-    # Ubicación del aviso solicitada abajo de los selectores
+    # Ubicación del aviso solicitada abajo de los selectores de segmento y moneda
     st.markdown("""
     <p style='font-size:13px; color:#64748b; margin-top:10px;'>
     ⚠️ <strong>Precios de instalación y abonos expresados en:</strong><br>
@@ -212,15 +212,15 @@ if opcion_menu == "1- Tablero de Simulación Comercial":
     st.subheader("Combinación de Oferta")
     col_pr1, col_pr2 = st.columns(2)
     with col_pr1:
-        pct_recupero = st.slider("% de la inversión en cliente a recuperar como costo de instalación", 0, 100, 35) / 100.0
-        cargo_neto = inversion_kit_local * pct_recupero
+        pct_recUniforme = st.slider("% de la inversión en cliente a recuperar como costo de instalación", 0, 100, 35) / 100.0
+        cargo_neto = inversion_kit_local * pct_recUniforme
         saldo_a_amortizar = inversion_kit_local - cargo_neto
         
         divisor = (1.0 - costo_fact_local)
         cargo_instalacion_final = (cargo_neto / divisor) * (1.21 if segmento == "B2C" else 1.0)
         st.metric("Cargo de Instalación Mínimo Referencial", f"{'$' if moneda == 'Pesos ARS' else 'USD'} {cargo_instalacion_final:,.2f}")
 
-    # RESOLUCIÓN PERMANENTE DE VARIABLE DE MARGEN (Unificada de forma definitiva)
+    # RESOLUCIÓN PERMANENTE DE VARIABLES DE COSTOS DIRECTOS (Saneado definitivo de nombres)
     costo_directo_mensual_moneda = 0.0
     contribucion_marginal_local = 0.0
     cd_maestro_dict = {x['Concepto']: x for x in st.session_state.db_costos_directos}
@@ -275,7 +275,7 @@ if opcion_menu == "1- Tablero de Simulación Comercial":
         dto_t4 = st.slider("Descuento T4 (%)", 0, 100, 0, key="ds4") / 100.0
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- SIMULACIÓN DEL FLUJO PARA PAYBACK REAL (Saneado de variables viejas) ---
+    # --- SIMULACIÓN DEL FLUJO PARA PAYBACK REAL (Saneado completo de variables fijas) ---
     saldo_pendiente = saldo_a_amortizar
     payback_real = 0.0
     
@@ -331,28 +331,28 @@ elif opcion_menu == "2- Administración Comercial":
 
     st.markdown('<div class="wiltel-card">', unsafe_allow_html=True)
     st.subheader("Opciones de Productos")
-    st.write("Modificá las listas interactivas verticales para actualizar las carteras de venta inmediatamente.")
+    st.write("Agregá, modificá o eliminá productos de las listas interactivas verticales sin tocar código.")
     
     col_g1, col_g2, col_g3, col_g4 = st.columns(4)
     with col_g1:
         st.markdown("**Internet**")
         df_i = pd.DataFrame(st.session_state.db_internet, columns=["Producto"])
-        res_i = st.data_editor(df_i, num_rows="dynamic", key="m_ed_i_v4")
+        res_i = st.data_editor(df_i, num_rows="dynamic", key="m_ed_i_v5")
         st.session_state.db_internet = res_i["Producto"].tolist()
     with col_g2:
         st.markdown("**TV**")
         df_t = pd.DataFrame(st.session_state.db_tv, columns=["Producto"])
-        res_t = st.data_editor(df_t, num_rows="dynamic", key="m_ed_t_v4")
+        res_t = st.data_editor(df_t, num_rows="dynamic", key="m_ed_t_v5")
         st.session_state.db_tv = res_t["Producto"].tolist()
     with col_g3:
         st.markdown("**Telefonía**")
         df_tl = pd.DataFrame(st.session_state.db_telefonia, columns=["Producto"])
-        res_tl = st.data_editor(df_tl, num_rows="dynamic", key="m_ed_tl_v4")
+        res_tl = st.data_editor(df_tl, num_rows="dynamic", key="m_ed_tl_v5")
         st.session_state.db_telefonia = res_tl["Producto"].tolist()
     with col_g4:
         st.markdown("**Adicionales**")
         df_ad = pd.DataFrame(st.session_state.db_adicionales, columns=["Adicional"])
-        res_ad = st.data_editor(df_ad, num_rows="dynamic", key="m_ed_ad_v4")
+        res_ad = st.data_editor(df_ad, num_rows="dynamic", key="m_ed_ad_v5")
         st.session_state.db_adicionales = res_ad["Adicional"].tolist()
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -367,7 +367,7 @@ elif opcion_menu == "3- Administración Técnica":
     st.write("Configurá qué producto de venta dispara hardware del depósito o requiere activación de bolsa Coaxil:")
     
     df_reglas = pd.DataFrame(st.session_state.reglas_tecnicas)
-    df_reglas_edit = st.data_editor(df_reglas, num_rows="dynamic", key="m_ed_reglas_v4")
+    df_reglas_edit = st.data_editor(df_reglas, num_rows="dynamic", key="m_ed_reglas_v5")
     st.session_state.reglas_tecnicas = df_reglas_edit.to_dict('records')
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -378,7 +378,7 @@ elif opcion_menu == "4- Administración de Costos":
     st.title("Administración de Costos")
     st.caption("⚠️ Valores expresados en **USD sin IVA**.")
     
-    # Secciones una debajo de la otra de forma obligatoria para evitar desplazamientos
+    # Secciones una debajo de la otra de forma obligatoria para evitar desplazamientos horizontales
     st.markdown('<div class="wiltel-card">', unsafe_allow_html=True)
     st.subheader("Sección 1: Costos de Materiales, Equipos y Mano de Obra")
     
@@ -388,18 +388,18 @@ elif opcion_menu == "4- Administración de Costos":
     st.markdown("#### Paquete de Materiales FTTH")
     df_f = pd.DataFrame(st.session_state.mat_ftth)
     df_f["Costo Unitario USD"] = df_f["Costo Unitario USD"].map(lambda x: float(x))
-    df_f_edit = st.data_editor(df_f, num_rows="dynamic", key="ed_ftth_v4")
+    df_f_edit = st.data_editor(df_f, num_rows="dynamic", key="ed_ftth_v5")
     st.session_state.mat_ftth = df_f_edit.to_dict('records')
     
     st.markdown("#### Paquete de Materiales Coaxil")
     df_c = pd.DataFrame(st.session_state.mat_coaxil)
     df_c["Costo Unitario USD"] = df_c["Costo Unitario USD"].map(lambda x: float(x))
-    df_c_edit = st.data_editor(df_c, num_rows="dynamic", key="ed_coaxil_v4")
+    df_c_edit = st.data_editor(df_c, num_rows="dynamic", key="ed_coaxil_v5")
     st.session_state.mat_coaxil = df_c_edit.to_dict('records')
     
     st.markdown("#### Maestro de Equipos")
     df_eq = pd.DataFrame(st.session_state.db_equipos)
-    df_eq_edit = st.data_editor(df_eq, num_rows="dynamic", key="ed_eq_v4")
+    df_eq_edit = st.data_editor(df_eq, num_rows="dynamic", key="ed_eq_v5")
     st.session_state.db_equipos = df_eq_edit.to_dict('records')
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -407,6 +407,6 @@ elif opcion_menu == "4- Administración de Costos":
     st.subheader("Sección 2: Costos Directos")
     st.write("Gestión de costos recurrentes mensuales e insumos junto con el margen comercial deseado.")
     df_cd = pd.DataFrame(st.session_state.db_costos_directos)
-    df_cd_edit = st.data_editor(df_cd, num_rows="dynamic", key="ed_cd_v4")
+    df_cd_edit = st.data_editor(df_cd, num_rows="dynamic", key="ed_cd_v5")
     st.session_state.db_costos_directos = df_cd_edit.to_dict('records')
     st.markdown('</div>', unsafe_allow_html=True)
