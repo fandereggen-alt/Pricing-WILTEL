@@ -307,12 +307,12 @@ if opcion_menu == "1- Tablero de Simulación Comercial":
     st.subheader("Validación Comercial")
     if payback_real == 99.0:
         st.error("🔴 Semáforo Oferta: El precio promocional fijado es inviable porque no cubre los costos directos mínimos.")
-    elif payback_real > pb_maestro:
-        st.error(f"🔴 Semáforo Oferta: RECHAZADO - El Payback Real es de {payback_real:.1f} meses. Supera tu límite estratégico de {pb_maestro} meses.")
+    elif payback_real > pb_obj_local:
+        st.error(f"🔴 Semáforo Oferta: RECHAZADO - El Payback Real es de {payback_real:.1f} meses. Supera tu límite estratégico de {pb_obj_local} meses.")
     else:
         st.success(f"🟢 Semáforo Oferta: APROBADO - El Payback Real es de {payback_real:.1f} meses. Oferta comercial financieramente sustentable.")
         
-    st.caption(f"📊 Desglose Técnico Financiero del Kit: Inversión en Calle: USD {inversion_kit_usd:,.2f} (Equipos: USD {total_hw_usd:,.2f} | Bolsa FTTH: USD {subtotal_ftth_usd:,.2f} | Bolsa Coaxil: USD {subtotal_coaxil_usd:,.2f})")
+    st.caption(f"📊 Desglose Técnico Financiero del Kit: Inversión en Calle: USD {inversion_kit_usd:,.2f} (Equipos: USD {costo_hardware_usd:,.2f} | Bolsa FTTH: USD {subtotal_ftth_usd:,.2f} | Bolsa Coaxil: USD {subtotal_coaxil_usd:,.2f})")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
@@ -337,22 +337,22 @@ elif opcion_menu == "2- Administración Comercial":
     with col_g1:
         st.markdown("**Internet**")
         df_i = pd.DataFrame(st.session_state.db_internet, columns=["Producto"])
-        res_i = st.data_editor(df_i, num_rows="dynamic", key="m_ed_i_v5")
+        res_i = st.data_editor(df_i, num_rows="dynamic", key="m_ed_i_v6")
         st.session_state.db_internet = res_i["Producto"].tolist()
     with col_g2:
         st.markdown("**TV**")
         df_t = pd.DataFrame(st.session_state.db_tv, columns=["Producto"])
-        res_t = st.data_editor(df_t, num_rows="dynamic", key="m_ed_t_v5")
+        res_t = st.data_editor(df_t, num_rows="dynamic", key="m_ed_t_v6")
         st.session_state.db_tv = res_t["Producto"].tolist()
     with col_g3:
         st.markdown("**Telefonía**")
         df_tl = pd.DataFrame(st.session_state.db_telefonia, columns=["Producto"])
-        res_tl = st.data_editor(df_tl, num_rows="dynamic", key="m_ed_tl_v5")
+        res_tl = st.data_editor(df_tl, num_rows="dynamic", key="m_ed_tl_v6")
         st.session_state.db_telefonia = res_tl["Producto"].tolist()
     with col_g4:
         st.markdown("**Adicionales**")
         df_ad = pd.DataFrame(st.session_state.db_adicionales, columns=["Adicional"])
-        res_ad = st.data_editor(df_ad, num_rows="dynamic", key="m_ed_ad_v5")
+        res_ad = st.data_editor(df_ad, num_rows="dynamic", key="m_ed_ad_v6")
         st.session_state.db_adicionales = res_ad["Adicional"].tolist()
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -367,7 +367,7 @@ elif opcion_menu == "3- Administración Técnica":
     st.write("Configurá qué producto de venta dispara hardware del depósito o requiere activación de bolsa Coaxil:")
     
     df_reglas = pd.DataFrame(st.session_state.reglas_tecnicas)
-    df_reglas_edit = st.data_editor(df_reglas, num_rows="dynamic", key="m_ed_reglas_v5")
+    df_reglas_edit = st.data_editor(df_reglas, num_rows="dynamic", key="m_ed_reglas_v6")
     st.session_state.reglas_tecnicas = df_reglas_edit.to_dict('records')
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -388,18 +388,18 @@ elif opcion_menu == "4- Administración de Costos":
     st.markdown("#### Paquete de Materiales FTTH")
     df_f = pd.DataFrame(st.session_state.mat_ftth)
     df_f["Costo Unitario USD"] = df_f["Costo Unitario USD"].map(lambda x: float(x))
-    df_f_edit = st.data_editor(df_f, num_rows="dynamic", key="ed_ftth_v5")
+    df_f_edit = st.data_editor(df_f, num_rows="dynamic", key="ed_ftth_v6")
     st.session_state.mat_ftth = df_f_edit.to_dict('records')
     
     st.markdown("#### Paquete de Materiales Coaxil")
     df_c = pd.DataFrame(st.session_state.mat_coaxil)
     df_c["Costo Unitario USD"] = df_c["Costo Unitario USD"].map(lambda x: float(x))
-    df_c_edit = st.data_editor(df_c, num_rows="dynamic", key="ed_coaxil_v5")
+    df_c_edit = st.data_editor(df_c, num_rows="dynamic", key="ed_coaxil_v6")
     st.session_state.mat_coaxil = df_c_edit.to_dict('records')
     
     st.markdown("#### Maestro de Equipos")
     df_eq = pd.DataFrame(st.session_state.db_equipos)
-    df_eq_edit = st.data_editor(df_eq, num_rows="dynamic", key="ed_eq_v5")
+    df_eq_edit = st.data_editor(df_eq, num_rows="dynamic", key="ed_eq_v6")
     st.session_state.db_equipos = df_eq_edit.to_dict('records')
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -407,6 +407,6 @@ elif opcion_menu == "4- Administración de Costos":
     st.subheader("Sección 2: Costos Directos")
     st.write("Gestión de costos recurrentes mensuales e insumos junto con el margen comercial deseado.")
     df_cd = pd.DataFrame(st.session_state.db_costos_directos)
-    df_cd_edit = st.data_editor(df_cd, num_rows="dynamic", key="ed_cd_v5")
+    df_cd_edit = st.data_editor(df_cd, num_rows="dynamic", key="ed_cd_v6")
     st.session_state.db_costos_directos = df_cd_edit.to_dict('records')
     st.markdown('</div>', unsafe_allow_html=True)
